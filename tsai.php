@@ -124,6 +124,15 @@ class InteractLoopWithPrompt
 }
 
 
+    /*
+    -------------------------------------------------------------------------
+    | Command Container
+    -------------------------------------------------------------------------
+    |
+    | This class is a container for commands. Uses an inner array container
+    | and every key of the container is the command's call string.
+    |
+    */
 class CommandContainer
 {
     protected $commands;
@@ -160,6 +169,19 @@ class CommandContainer
     
 }
 
+
+    /*
+    -------------------------------------------------------------------------
+    | Command Dispatcher
+    -------------------------------------------------------------------------
+    |
+    | CommandDispatcher is supposed to use a container and a parser to 
+    | lookup for the appropriate command and return it (dispatchFromInput).
+    | Also, this class implements __invoke(input), which will dispatch a command
+    | and additionally execute it and return its result.
+    |
+    |
+    */
 class CommandDispatcher
 {
 
@@ -183,6 +205,7 @@ class CommandDispatcher
         }
         else
         {
+            # parseInput bug here
             list($_, $args) = $this->parser->parseInput('_'.$input);
             
             $cmd = $this->container->lookup('_');
@@ -208,22 +231,19 @@ class CommandDispatcher
         
         return call_user_func_array($command, $args);
     }
-    
-    /*
-    
-    public function process($input)
-    {
-        if (!is_null($c = $this->dispatchFromInput($input)))
-        {
-            $c->
-        }
-    }
-    */
-    
 }
 
 
-
+    /*
+    -------------------------------------------------------------------------
+    | CommandParser
+    -------------------------------------------------------------------------
+    |
+    | Class to parse a string into command and its arguments
+    |
+    | Note: see CommandDispatcher/ # parseInput bug here that needs correction
+    |
+    */
 class CommandParser
 {
     protected $commandInit = ':';
@@ -252,15 +272,14 @@ class CommandParser
     
 }
 
-
-class CommandExecuter
-{
-    public function execute($command, $arguments = [])
-    {
-        return call_user_func_array($command, $arguments);
-    }
-}
-
+    /*
+    -------------------------------------------------------------------------
+    | Application Run
+    -------------------------------------------------------------------------
+    |
+    | Here, we initialize all our objects and start the loop.
+    |
+    */
 
 $parser = new CommandParser;
 $container = new CommandContainer([
@@ -273,7 +292,6 @@ $dispatcher = new CommandDispatcher($container, $parser);
 $ioLoop = new InteractLoopWithPrompt($dispatcher);
 $ioLoop();
 
-die();
 
     /*
     -------------------------------------------------------------------------
