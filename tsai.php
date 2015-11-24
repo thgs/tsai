@@ -286,6 +286,7 @@ $container = new CommandContainer([
     't' =>  function($x) { return syntaxView($x); },
     'q' =>  function($x = 0) { echo 'Bye!'; exit($x); },
     'b' =>  'syntaxView',
+    'i' =>  new IncludeCommand,
     '_' =>  '@t'
 ]);
 $dispatcher = new CommandDispatcher($container, $parser);
@@ -455,10 +456,8 @@ class DefViaReflCommand extends RepolCommand
     }
 }
 
-class IncludeCommand extends RepolCommand
+class IncludeCommand
 {
-    protected $cmd = 'i';
-    
     public function command($arguments)
     {
         # include all files from arguments
@@ -472,6 +471,13 @@ class IncludeCommand extends RepolCommand
         
         # return that OKay..
         return 'Okay, included '.count($arguments).' file(s).';
+    }
+    
+    public function __invoke()
+    {
+        $arguments = func_get_args();
+        
+        return $this->command($arguments);
     }
 }
 
