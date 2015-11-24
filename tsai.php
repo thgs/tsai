@@ -63,42 +63,9 @@ function listIncludes()
 
 
 
-function getLine()
-{
-    $stdin = fopen('php://stdin');
-    
-    $line = fgets($stdin);
-    
-    fclose($stdin);
-    
-    return $line;
-}
-
-function putStr($s) 
-{ 
-    echo $s;
-}
-function putStrLn($s) 
-{ 
-    echo $s.PHP_EOL; 
-}
-
-
-function interact($f)
-{
-    return putStr($f(getLine()));
-}
-
-# generic interact
-function gInteract($f, $f1 = 'putStr', $f2 = 'getLine')
-{
-    return $f1($f($f2()));
-}
-
-
 class InteractLoopWithPrompt
 {    
-    public $prompt = '> ';
+    public $prompt = 'tsai> ';
     public $newline = PHP_EOL;
     
     protected $f, $inputHandle, $outputHandle;
@@ -111,16 +78,15 @@ class InteractLoopWithPrompt
         $this->outputHandle = ($outputHandle) ?: fopen('php://stdout', 'w');
     }
     
-    public function __invoke()
-    {
-        return $this->run();
-    }
-    
     public function run()
     {
         while (true)
         {
+            $this->output($this->prompt);
+            
             $this->output( $this->f( $this->input() ) );
+            
+            $this->output($this->newline);
         }
     }
     
@@ -134,6 +100,10 @@ class InteractLoopWithPrompt
         return fgets($this->inputHandle);
     }
     
+    public function __invoke()
+    {
+        return $this->run();
+    }
     
     public function __sleep()
     {
