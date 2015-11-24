@@ -62,7 +62,15 @@ function listIncludes()
 # returnValView
 
 
-
+    /*
+    -------------------------------------------------------------------------
+    | InteractLoopWithPrompt
+    -------------------------------------------------------------------------
+    |
+    | This class should create an Interact Loop with a prompt ! :D
+    | Also it implements __invoke() which maps to run().
+    |
+    */
 class InteractLoopWithPrompt
 {    
     public $prompt = 'tsai> ';
@@ -84,7 +92,9 @@ class InteractLoopWithPrompt
         {
             $this->output($this->prompt);
             
-            $this->output( $this->f( $this->input() ) );
+            $func = $this->f;
+            
+            $this->output( $func( $this->input() ) );
             
             $this->output($this->newline);
         }
@@ -159,6 +169,7 @@ class CommandDispatcher
     public function __construct($container, $parser)
     {
         $this->container = $container;
+        $this->parser = $parser;
     }
     
     
@@ -168,10 +179,34 @@ class CommandDispatcher
         {
             list($cmd, $args) = $this->parser->parseInput($input);
             
-            return $this->container->lookup($cmd);
+            return [$this->container->lookup($cmd), $args];
+        }
+        else
+        {
+            list($_, $args) = $this->parser->parseInput('_'.$input);
+            
+            $cmd = $this->container->lookup('_');
+            
+            if (substr($cmd, 0, 1) == '@')
+            {
+                $key = substr($cmd, 1);
+                
+                $newArgs = array_merge([$_], $args);
+                
+                return [$this->container->lookup($key), $newArgs];
+            }
+            
+            // else it should be callable! :D
         }
         
         return null;
+    }
+    
+    public function __invoke($input)
+    {
+        list($command, $args) = $this->dispatchFromInput($input);
+        
+        return call_user_func_array($command, $args);
     }
     
     /*
@@ -212,7 +247,7 @@ class CommandParser
     
     public function parseArguments($argString)
     {
-        return explode(' ', array_map('trim', $argString));
+        return array_map('trim', explode(' ', trim($argString)));
     }
     
 }
@@ -222,10 +257,23 @@ class CommandExecuter
 {
     public function execute($command, $arguments = [])
     {
-        
+        return call_user_func_array($command, $arguments);
     }
 }
 
+
+$parser = new CommandParser;
+$container = new CommandContainer([
+    't' =>  function($x) { return syntaxView($x); },
+    'q' =>  function($x = 0) { echo 'Bye!'; exit($x); },
+    'b' =>  'syntaxView',
+    '_' =>  '@t'
+]);
+$dispatcher = new CommandDispatcher($container, $parser);
+$ioLoop = new InteractLoopWithPrompt($dispatcher);
+$ioLoop();
+
+die();
 
     /*
     -------------------------------------------------------------------------
