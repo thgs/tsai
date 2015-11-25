@@ -1,22 +1,31 @@
 <?php
 
-function syntaxView($for)
+function syntaxView()
 {
-    $refl = new ReflectionFunction($for);
+    $args = func_get_args();
     
-    $parameters = implode(' -> ', 
-    array_map(
-    function ($param) {
-        $name = ($param->isOptional())
-            ? '['.$param->getName().']'
-            : $param->getName();
-            
-        return $name;
-                
-     }, $refl->getParameters()
-     ));
+    $ret = '';
+    
+    foreach ($args as $for)
+    {
+        $refl = new ReflectionFunction($for);
         
-    return $for.' :: '.$parameters;
+        $parameters = implode(' -> ', 
+        array_map(
+        function ($param) {
+            $name = ($param->isOptional())
+                ? '['.$param->getName().']'
+                : $param->getName();
+                
+            return $name;
+                    
+         }, $refl->getParameters()
+         ));
+            
+        $ret .= PHP_EOL."\t".$for.' :: '.$parameters;
+    }
+    
+    return substr($ret, strlen(PHP_EOL));
 }
 
 
@@ -283,9 +292,8 @@ class CommandParser
 
 $parser = new CommandParser;
 $container = new CommandContainer([
-    't' =>  function($x) { return syntaxView($x); },
+    't' =>  'syntaxview',
     'q' =>  function($x = 0) { echo 'Bye!'; exit($x); },
-    'b' =>  'syntaxView',
     'i' =>  new IncludeCommand,
     '_' =>  '@t'
 ]);
