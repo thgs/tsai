@@ -335,17 +335,37 @@ class IncludeCommand
 {
     public function command($arguments)
     {
+        $included = 0;
+        
         # include all files from arguments
         foreach ($arguments as $arg)
         {
             if (is_file($arg))
             {
                 include_once $arg;
+                $included++;
+            }
+            if (is_dir($arg))
+            {
+                $glob = glob($arg . '/*.php');
+                foreach ($glob as $file)
+                {
+                    include_once $file;
+                    $included++;
+                }
+            }
+            if ($glob = glob($arg))
+            {
+                foreach ($glob as $file)
+                {
+                    include_once $file;
+                    $included++;
+                }
             }
         }
         
         # return that OKay..
-        return 'Okay, included '.count($arguments).' file(s).';
+        return 'Okay, included '.$included.' file(s).';
     }
     
     public function __invoke()
