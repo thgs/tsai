@@ -27,21 +27,28 @@ function syntaxView()
     
     foreach ($args as $for)
     {
-        $refl = new ReflectionFunction($for);
-        
-        $parameters = implode(' -> ', 
-        array_map(
-        function ($param) {
-            $name = ($param->isOptional())
-                ? '['.$param->getName().']'
-                : $param->getName();
-                
-            return $name;
-                    
-         }, $refl->getParameters()
-         ));
+        try 
+        {
+            $refl = new ReflectionFunction($for);
             
-        $ret .= PHP_EOL."\t".$for.' :: '.$parameters;
+            $parameters = implode(' -> ', 
+            array_map(
+            function ($param) {
+                $name = ($param->isOptional())
+                    ? '['.$param->getName().']'
+                    : $param->getName();
+                    
+                return $name;
+                        
+             }, $refl->getParameters()
+             ));
+                
+            $ret .= PHP_EOL."\t".$for.' :: '.$parameters;
+        }
+        catch (ReflectionException $re)
+        {
+            $ret .= PHP_EOL."\t".$for. ' is UNDEFINED';
+        }
     }
     
     return substr($ret, strlen(PHP_EOL));
@@ -242,7 +249,7 @@ class CommandDispatcher
         else
         {
             # parseInput bug here
-            list($_, $args) = $this->parser->parseInput('_'.$input);
+            list($_, $args) = $xx = $this->parser->parseInput('_'.$input);
             
             $cmd = $this->container->lookup('_');
             
@@ -250,7 +257,7 @@ class CommandDispatcher
             {
                 $key = substr($cmd, 1);
                 
-                $newArgs = array_merge([$_], $args);
+                $newArgs = (empty($args)) ? [$_] : array_merge([$_], $args);
                 
                 return [$this->container->lookup($key), $newArgs];
             }
@@ -303,7 +310,8 @@ class CommandParser
     
     public function parseArguments($argString)
     {
-        return array_map('trim', explode(' ', trim($argString)));
+        return ($argString != '') 
+            ? array_map('trim', explode(' ', trim($argString))) : [];
     }
     
 }
