@@ -1,5 +1,24 @@
 <?php
 
+
+function ats(array $a)
+{
+    if (empty($a)) return '[]';
+    
+    foreach($a as $k => $v)
+    {
+        if (is_array($v))
+            $a[$k] = ats($v);
+        if (is_object($v))
+            $a[$k] = get_class($v);
+    }
+    
+    $elems = implode(', ', $a);
+    
+    return '['.$elems.']';
+}
+
+
 function syntaxView()
 {
     $args = func_get_args();
@@ -32,21 +51,29 @@ function syntaxView()
 # 0/null for all, 1 for user only, 2 for internal only
 function listFunctions($show = null)
 {
-    $funcs = get_declared_functions();
+    $funcs = get_defined_functions();
     
     switch ($show)
     {
-        case 1:     return $funcs['user'];
-        case 2:     return $funcs['internal'];
-        case 0:
-        case null:  return array_values($funcs);
-        /* there is something wrong with this code ?
+        case "1":
+            $r = $funcs['user'];
+            break;
+
+        case "2":
+            $r = $funcs['internal'];
+            break;
+
+        case "0":
+        case null:
+            $r = array_values($funcs);
+            break;
+
         default:
-            $ret = ((is_string($show)) && (isset($funcs[$show]))
+            $r = ((is_string($show)) && (isset($funcs[$show]))) 
                 ? $funcs[$show] : array();
-            return $ret;
-        */
     }
+    
+    return ats($r);
 }
 
 function listClasses()
@@ -292,10 +319,11 @@ class CommandParser
 
 $parser = new CommandParser;
 $container = new CommandContainer([
-    't' =>  'syntaxview',
-    'q' =>  function($x = 0) { echo 'Bye!'; exit($x); },
-    'i' =>  new IncludeCommand,
-    '_' =>  '@t'
+    't'     =>  'syntaxview',
+    'q'     =>  function($x = 0) { echo 'Bye!'; exit($x); },
+    'i'     =>  new IncludeCommand,
+    'lf'    =>  'listFunctions',
+    '_'     =>  '@t'
 ]);
 $dispatcher = new CommandDispatcher($container, $parser);
 $ioLoop = new InteractLoopWithPrompt($dispatcher);
