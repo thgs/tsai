@@ -249,7 +249,7 @@ class CommandDispatcher
         else
         {
             # parseInput bug here
-            list($_, $args) = $xx = $this->parser->parseInput('_'.$input);
+            list($_, $args) = $this->parser->parseInput('_'.$input);
             
             $cmd = $this->container->lookup('_');
             
