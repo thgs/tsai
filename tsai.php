@@ -246,31 +246,47 @@ class CommandDispatcher
     
     public function dispatchFromInput($input)
     {
+        // handle command input
         if ($this->parser->isCommand($input))
         {
             list($cmd, $args) = $this->parser->parseInput($input);
             
             return [$this->container->lookup($cmd), $args];
         }
+        
+        // handle default command
         else
         {
-            # parseInput bug here
+            # parseInput buggy-behaviour here, we should not be using '_'
             list($_, $args) = $this->parser->parseInput('_'.$input);
             
+            // lookup `default` command
             $cmd = $this->container->lookup('_');
             
+            // re-construct arguments, since there is no command, if we need
+            $newArgs = (empty($args)) ? [$_] : array_merge([$_], $args);
+            
+            // handle case of a `pointer` command
             if (substr($cmd, 0, 1) == '@')
             {
                 $key = substr($cmd, 1);
                 
-                $newArgs = (empty($args)) ? [$_] : array_merge([$_], $args);
-                
                 return [$this->container->lookup($key), $newArgs];
             }
             
-            // else it should be callable! :D
+            // handle default case of just a callback
+            else
+            {
+                // output a pretty error message if command is not callable :)
+                return (is_callable($cmd)) 
+                    ? [$cmd, $newArgs]
+                    : [function () use ($cmd) { 
+                        echo 'tsai: Error, '. (string) $cmd .' is not callable!';
+                    }, []];
+            }
         }
         
+        // this should never be executed
         return null;
     }
     
