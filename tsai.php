@@ -18,69 +18,75 @@ function ats(array $a)
     return '['.$elems.']';
 }
 
-
-function syntaxView()
+class FunctionSyntaxView
 {
-    $args = func_get_args();
-    
-    $ret = '';
-    
-    foreach ($args as $for)
+    public function __invoke()
     {
-        try 
+        $args = func_get_args();
+        
+        $ret = '';
+        
+        foreach ($args as $for)
         {
-            $refl = new ReflectionFunction($for);
-            
-            $parameters = implode(' -> ', 
-            array_map(
-            function ($param) {
-                $name = ($param->isOptional())
-                    ? '['.$param->getName().']'
-                    : $param->getName();
-                    
-                return $name;
-                        
-             }, $refl->getParameters()
-             ));
+            try 
+            {
+                $refl = new ReflectionFunction($for);
                 
-            $ret .= PHP_EOL."\t".$for.' :: '.$parameters;
+                $parameters = implode(' -> ', 
+                array_map(
+                function ($param) {
+                    $name = ($param->isOptional())
+                        ? '['.$param->getName().']'
+                        : $param->getName();
+                        
+                    return $name;
+                            
+                 }, $refl->getParameters()
+                 ));
+                    
+                $ret .= PHP_EOL."\t".$for.' :: '.$parameters;
+            }
+            catch (ReflectionException $re)
+            {
+                $ret .= PHP_EOL."\t".$for. ' is UNDEFINED';
+            }
         }
-        catch (ReflectionException $re)
-        {
-            $ret .= PHP_EOL."\t".$for. ' is UNDEFINED';
-        }
+        
+        return substr($ret, strlen(PHP_EOL));
     }
-    
-    return substr($ret, strlen(PHP_EOL));
 }
 
 
-# 0/null for all, 1 for user only, 2 for internal only
-function listFunctions($show = null)
+class ListFunctionsCommand
 {
-    $funcs = get_defined_functions();
-    
-    switch ($show)
+    # 0/null for all, 1 for user only, 2 for internal only
+    public function __invoke($show = null)
     {
-        case "1":
-            $r = $funcs['user'];
-            break;
-
-        case "2":
-            $r = $funcs['internal'];
-            break;
-
-        case "0":
-        case null:
-            $r = array_values($funcs);
-            break;
-
-        default:
-            $r = ((is_string($show)) && (isset($funcs[$show]))) 
-                ? $funcs[$show] : array();
+        $funcs = get_defined_functions();
+        
+        switch ($show)
+        {
+            case "1":
+                $r = $funcs['user'];
+                break;
+    
+            case "2":
+                $r = $funcs['internal'];
+                break;
+    
+            case "0":
+            case null:
+                $r = array_values($funcs);
+                break;
+    
+            default:
+                $r = ((is_string($show)) && (isset($funcs[$show]))) 
+                    ? $funcs[$show] : array();
+        }
+        
+        return ats($r);
     }
     
-    return ats($r);
 }
 
 function listClasses()
@@ -327,10 +333,10 @@ class CommandParser
 
 $parser = new CommandParser;
 $container = new CommandContainer([
-    't'     =>  'syntaxview',
+    't'     =>  new FunctionSyntaxView,
     'q'     =>  function($x = 0) { echo 'Bye!'; exit($x); },
     'i'     =>  new IncludeCommand,
-    'lf'    =>  'listFunctions',
+    'lf'    =>  new ListFunctionsCommand,
     '_'     =>  '@t'
 ]);
 $dispatcher = new CommandDispatcher($container, $parser);
