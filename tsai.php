@@ -251,7 +251,16 @@ class CommandDispatcher
         {
             list($cmd, $args) = $this->parser->parseInput($input);
             
-            return [$this->container->lookup($cmd), $args];
+            $cmd = $this->container->lookup($cmd);
+            
+            // if command not found
+            if ($cmd == false)
+            {
+                $cmd = function () { echo 'tsai: Error, command not found'; };
+            }
+            
+            // return command with arguments
+            return [$cmd, $args];
         }
         
         // handle default command
