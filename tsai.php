@@ -28,8 +28,10 @@ class ListClassMethods
             $refl = new ReflectionClass($class);
             
             $methods = array_map(function ($x) use ($class) {
+                
                 $c = new SyntaxView;
-                return PHP_EOL.call_user_func($c, $class .'::'. $x->name);
+
+                return PHP_EOL . call_user_func($c, $class .'::'. $x->name);
                 
             }, $refl->getMethods());
         }
@@ -38,7 +40,7 @@ class ListClassMethods
             return 'Class '.$class.' is undefined'.PHP_EOL;
         }
         
-        return ats($methods);
+        return substr(ats($methods), 0, -1) . PHP_EOL.']';
     }
 }
 
