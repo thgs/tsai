@@ -430,6 +430,7 @@ class IncludeCommand
             {
                 include_once $arg;
                 $included++;
+                continue;
             }
             if (is_dir($arg))
             {
@@ -439,6 +440,7 @@ class IncludeCommand
                     include_once $file;
                     $included++;
                 }
+                continue;
             }
             if ($glob = glob($arg))
             {
