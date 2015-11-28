@@ -18,8 +18,38 @@ function ats(array $a)
     return '['.$elems.']';
 }
 
-class FunctionSyntaxView
+
+class ListClassMethods
 {
+    public function __invoke($class)
+    {
+        try 
+        {
+            $refl = new ReflectionClass($class);
+            
+            $methods = array_map(function ($x) use ($class) {
+                $c = new SyntaxView;
+                return PHP_EOL.call_user_func($c, $class .'::'. $x->name);
+                
+            }, $refl->getMethods());
+        }
+        catch (ReflectionException $re)
+        {
+            return 'Class '.$class.' is undefined'.PHP_EOL;
+        }
+        
+        return ats($methods);
+    }
+}
+
+class SyntaxView
+{
+    
+    private function isMethod($string)
+    {
+        return (strpos($string, '::') !== false);
+    }
+    
     public function __invoke()
     {
         $args = func_get_args();
@@ -30,7 +60,15 @@ class FunctionSyntaxView
         {
             try 
             {
-                $refl = new ReflectionFunction($for);
+                if ($this->isMethod($for))
+                {
+                    list($class, $method) = explode('::', $for);
+                    $refl = new ReflectionMethod($class, $method);
+                }
+                else
+                {
+                    $refl = new ReflectionFunction($for);
+                }
                 
                 $parameters = implode(' -> ', 
                 array_map(
@@ -89,15 +127,21 @@ class ListFunctionsCommand
     
 }
 
-function listClasses()
+class ListClassesCommand
 {
-    return get_declared_classes();
+    public function __invoke()
+    {
+        return ats(get_declared_classes());
+    }
 }
 
 
-function listIncludes()
+class ListIncludesCommand
 {
-    return get_included_files();
+    public function __invoke()
+    {
+        return ats(get_included_files());
+    }
 }
 
 # more functions    ------------
@@ -358,10 +402,13 @@ class CommandParser
 
 $parser = new CommandParser;
 $container = new CommandContainer([
-    't'     =>  new FunctionSyntaxView,
+    't'     =>  new SyntaxView,
     'q'     =>  function($x = 0) { echo 'Bye!'; exit($x); },
     'i'     =>  new IncludeCommand,
     'lf'    =>  new ListFunctionsCommand,
+    'li'    =>  new ListIncludesCommand,
+    'lc'    =>  new ListClassesCommand,
+    'lcm'   =>  new ListClassMethods,
     '_'     =>  '@t'
 ]);
 $dispatcher = new CommandDispatcher($container, $parser);
