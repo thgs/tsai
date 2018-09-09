@@ -345,7 +345,7 @@ class CommandParser
 
     public function parseInput($input)
     {
-        $preparedInput = substr(trim($input), 1);
+        $preparedInput = substr(trim($input), 1).' ';
 
         list($cmd, $argString) = explode(' ', $preparedInput, 2);
 
